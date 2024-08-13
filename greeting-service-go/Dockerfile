@@ -19,6 +19,8 @@
 # The image is based on a small Alpine Linux image.
 # The image uses a non-root user with a known UID/GID to run the container.
 # The image has a single entrypoint, the go-greeter executable.
+
+# Stage 1: Build the Go application
 FROM golang:1.19-alpine AS builder
 
 # Set the working directory to /app
@@ -30,14 +32,19 @@ COPY . .
 # Build the Go program inside the container
 RUN go build -o go-greeter .
 
-# Use a small Alpine Linux image as the base image for the final container
-FROM alpine:latest
+# Stage 2: Create the final image with vulnerabilities
+# Use an older version of Alpine that may have vulnerabilities
+FROM alpine:3.10
 
 # Set the working directory to /app
 WORKDIR /app
 
 # Copy the executable from the builder container
 COPY --from=builder /app/go-greeter .
+
+# Add a vulnerable package for the sake of the Trivy scan (example: libcrypto1.1)
+# This package version has known vulnerabilities
+RUN apk add --no-cache libcrypto1.1=1.1.1d-r0
 
 # Create a user with a known UID/GID within range 10000-20000.
 # This is required by Choreo to run the container as a non-root user.
@@ -49,8 +56,10 @@ RUN adduser \
     --no-create-home \
     --uid 10014 \
     "choreo"
+
 # Use the above created unprivileged user
 USER 10014
 
 # Set the entrypoint to the executable
 ENTRYPOINT ["./go-greeter"]
+
