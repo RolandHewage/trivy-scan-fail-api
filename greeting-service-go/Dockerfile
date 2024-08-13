@@ -44,7 +44,7 @@ COPY --from=builder /app/go-greeter .
 
 # Add a vulnerable package for the sake of the Trivy scan (example: libcrypto1.1)
 # This package version has known vulnerabilities
-RUN apk add --no-cache libcrypto1.1=1.1.1d-r0
+RUN apk add --no-cache libcrypto1.1
 
 # Create a user with a known UID/GID within range 10000-20000.
 # This is required by Choreo to run the container as a non-root user.
